@@ -100,7 +100,7 @@ async def on_message(message):
             # Display transaction object in chat
             await message.channel.send(embed=new_transaction.to_embed())
         else:  # action == 'SELL' or action == 'COVER'
-            await message.channel.send(embed=close_trade(action, ticker))
+            await message.channel.send(embed=close_trade(action, ticker, message))
 
     await bot.process_commands(message)
 

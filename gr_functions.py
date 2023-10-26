@@ -34,18 +34,29 @@ class Transaction:
         self.ticker = ticker
         self.price = price
         self.datetime = datetime
+        self.status = "OPEN"
+        self.profit = 0
 
     def to_embed(self):
-        random_color = random.randint(0, 0xFFFFFF)
+        if self.profit == 0:
+            embed_color = 0xFFFFFF
+        elif self.profit > 0:
+            embed_color = 0x00FF00
+        else:
+            embed_color = 0xFF0000
+
         embed = discord.Embed(
             title=f"{self.action.capitalize()} {self.ticker.upper()}",
             description="Transaction was successfully stored.",
-            color=random_color,
+            color=embed_color,
         )
         embed.set_author(name=self.user.name, icon_url=self.user.avatar.url)
         embed.add_field(name="User", value=self.user, inline=True)
         embed.add_field(name="Ticker", value=self.ticker.upper(), inline=True)
         embed.add_field(name="Price", value=self.price, inline=True)
+        embed.add_field(name="Status", value=self.status, inline=True)
+        if self.action == "SELL" or self.action == "COVER":
+            embed.add_field(name="Profit", value=f'{str(self.profit)}%')
         embed.add_field(name="Date", value=self.datetime)
         # embed.set_footer(text=f"{self.date} EST")
         return embed
@@ -119,7 +130,7 @@ def getCurrentPrice(ticker):
     return todays_data["Close"][0]
 
 
-def close_trade(action, ticker):
+def close_trade(action, ticker, message):
     # SQL Query for all open transaction by same user and ticker
     conn = sqlite3.connect("stocks_transactions.db")
     cursor = conn.cursor()
@@ -128,7 +139,7 @@ def close_trade(action, ticker):
     SELECT * 
     FROM transactions 
     WHERE status = 'OPEN' AND ticker = ?
-    ORDER BY date_opened DESC
+    ORDER BY date DESC
     LIMIT 1;
         """,
         (ticker,),
@@ -143,8 +154,8 @@ def close_trade(action, ticker):
         ticker = result[3]
 
         # New values
-        price = getCurrentPrice(ticker)
-        profit = price / result[4] * 100  # Sold(covered) price / bought(shorted) price * 100
+        price = round(getCurrentPrice(ticker), 2)
+        profit = round((price - result[4]) / result[4] * 100, 2)  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
         status = "CLOSED"
         date = datetime.datetime.now(pytz.timezone("US/Eastern"))  # Current time as of EST
 
@@ -169,6 +180,10 @@ def close_trade(action, ticker):
         # Commit changes and close connection
         conn.commit()
         conn.close()
+        sold_transaction = Transaction(message.author, action, ticker, price, date)
+        sold_transaction.profit = profit
+        sold_transaction.status = status
+        return sold_transaction.to_embed() # CREATE A NEW EMBED FOR SOLD TRANSACTIONS
     else:
         # ERROR: No open trades to sell
         return embed_error(0)
