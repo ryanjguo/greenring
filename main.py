@@ -7,8 +7,12 @@ import yfinance as yf
 from gr_functions import Transaction
 import sqlite3
 from gr_ranking import *
+import json
 
-TOKEN = "MTA3ODY4ODEzODg5NTAzNjU2Nw.GUAvXA.zkq70yUu0u-p9Z0lFxHrFt6AgpcNYb7sJXDRr4"
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+TOKEN = config['token']
 
 intents = discord.Intents.default()
 intents.message_content = True
