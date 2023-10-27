@@ -2,8 +2,9 @@
 
 ## Commands
 ### Open/Close Trades 📈
-All commands should follow the form **[Action] [Symbol]**
-  For example: Buy AAPL, Sell AMZN
+All commands should follow the form _**[Action] [Symbol]**_
+
+For example: Buy AAPL, Sell AMZN
 
 The program will automatically fetch the current market price for the ticker, and amount of shares should not be disclosed.
 
