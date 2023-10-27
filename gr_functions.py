@@ -162,11 +162,11 @@ def open_trade(action, ticker, message):
         """
     SELECT * 
     FROM transactions 
-    WHERE status = 'OPEN' AND ticker = ?
+    WHERE status = 'OPEN' AND ticker = ? AND action = ?
     ORDER BY date DESC
     LIMIT 1;
         """,
-        (ticker,),
+        (ticker, action),
     )
     result = cursor.fetchone()
     # Check if a result was found
@@ -225,17 +225,22 @@ def open_trade(action, ticker, message):
 
 def close_trade(action, ticker, message):
     # SQL Query for all open transaction by same user and ticker
+    if action == "SELL":
+        oppo_action = "BUY"
+    else:
+        oppo_action = "SHORT"
+
     conn = sqlite3.connect("stocks_transactions.db")
     cursor = conn.cursor()
     cursor.execute(
         """
     SELECT * 
     FROM transactions 
-    WHERE status = 'OPEN' AND ticker = ?
+    WHERE status = 'OPEN' AND ticker = ? AND action = ?
     ORDER BY date DESC
     LIMIT 1;
         """,
-        (ticker,),
+        (ticker, oppo_action),
     )
 
     result = cursor.fetchone()
