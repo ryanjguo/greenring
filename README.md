@@ -23,6 +23,6 @@ This feature returns a Discord Embed of the top ranking users by their profit, f
 
 
 
-If you find any issues with the bot, please ping me on Discord _**@rgld**_. Do your best to find any errors as the pot should endure rigorous testing before being released to the public. Also let me know if the bot goes offline as I am currently running it on my laptop.
+If you find any issues with the bot, please ping me on Discord, _**@rgld**_. Do your best to find any errors as the bot should endure rigorous testing before being released to the public. Also let me know if the bot goes offline as I am currently running it on my laptop.
 
 [Join Testing Server](https://discord.gg/6SYV2nJV)
