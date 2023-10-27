@@ -8,7 +8,7 @@ For example: Buy AAPL, Sell AMZN
 
 The program will automatically fetch the current market price for the ticker, and amount of shares should not be disclosed.
 
-Accepted actions include:
+Accepted formats of actions include:
 - Buy, bot, bought
 - sell, sold, sel, close
 - short, shorted
