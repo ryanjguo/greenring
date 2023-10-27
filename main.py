@@ -6,6 +6,7 @@ from gr_functions import *
 import yfinance as yf
 from gr_functions import Transaction
 import sqlite3
+from gr_ranking import *
 
 TOKEN = "MTA3ODY4ODEzODg5NTAzNjU2Nw.GUAvXA.zkq70yUu0u-p9Z0lFxHrFt6AgpcNYb7sJXDRr4"
 
@@ -30,10 +31,14 @@ async def on_ready():
 
 
 @bot.command()
-async def hello(ctx):
+async def hello(ctx, arg=""):
     """Simple command to respond with 'Hello!'."""
-    await ctx.send("Hello!")
+    await ctx.send(f"Hello {arg}!")
 
+@bot.command()
+async def getrank(ctx):
+    print("hello world")
+    await get_ranking(ctx)
 
 @bot.event
 async def on_message(message):
@@ -63,6 +68,7 @@ async def on_message(message):
             await message.channel.send("Invalid ticker. Please try again.")
             return
 
+        # For testing purposes
         if checkMarketOpen() == False:
             await message.channel.send(
                 "Market is closed. Please try again at another time."
@@ -70,35 +76,10 @@ async def on_message(message):
             return
 
         if action == "BUY" or action == "SHORT":
-            # Check market price and date/time
-            market_price = round(getCurrentPrice(ticker), 2)
-            current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            # Create transaction object
-            new_transaction = Transaction(
-                message.author, action, ticker, market_price, current_datetime
-            )
-
-            # Add market price and date/time to transaction object
-            new_transaction.price = market_price
-            new_transaction.date = current_datetime
-
-            # Store transaction object in database
-            conn = sqlite3.connect("stocks_transactions.db")
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                INSERT INTO transactions (username, action, ticker, price, date) VALUES (?, ?, ?, ?, ?)
-            """,
-                (message.author.name, action, ticker, market_price, current_datetime),
-            )
-            conn.commit()
-            conn.close()
-
             ## CHECK IF ACTION IS A CLOSE TRADE (SELL OR COVER)
 
             # Display transaction object in chat
-            await message.channel.send(embed=new_transaction.to_embed())
+            await message.channel.send(embed=open_trade(action, ticker, message))
         else:  # action == 'SELL' or action == 'COVER'
             await message.channel.send(embed=close_trade(action, ticker, message))
 

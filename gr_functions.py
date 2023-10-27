@@ -60,6 +60,30 @@ class Transaction:
         embed.add_field(name="Date", value=self.datetime)
         # embed.set_footer(text=f"{self.date} EST")
         return embed
+    
+    def updated_trade_embed(self, prev_price, prev_date, avg_price):
+        if self.profit == 0:
+            embed_color = 0xFFFFFF
+        elif self.profit > 0:
+            embed_color = 0x00FF00
+        else:
+            embed_color = 0xFF0000
+        embed = discord.Embed(
+            title=f"Updated {self.action.capitalize()} {self.ticker.upper()}",
+            description=f"You have previously opened a trade for {self.ticker.upper()} at",
+            color=embed_color,
+        )
+        embed.set_author(name=self.user.name, icon_url=self.user.avatar.url)
+        embed.add_field(name="Previous Price", value=prev_price, inline=True)
+        embed.add_field(name="Previous Date", value=prev_date, inline=True)
+        embed.add_field(name="\u200b", value="\u200b")
+        embed.add_field(name="Current Price", value=self.price, inline=True)
+        embed.add_field(name="Current Date", value=self.datetime, inline=True)
+        embed.add_field(name="Averaged Price", value=f"Thus your price is averaged to {avg_price}\n", inline=False)
+        embed.add_field(name="User", value=self.user, inline=True)
+        embed.add_field(name="Ticker", value=self.ticker.upper(), inline=True)
+        embed.add_field(name="Status", value=self.status, inline=True)
+        return embed
 
 
 def embed_error(err_num):
@@ -130,6 +154,75 @@ def getCurrentPrice(ticker):
     return todays_data["Close"][0]
 
 
+def open_trade(action, ticker, message):
+    # SQL Query for all open transaction by same user and ticker'
+    conn = sqlite3.connect("stocks_transactions.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+    SELECT * 
+    FROM transactions 
+    WHERE status = 'OPEN' AND ticker = ?
+    ORDER BY date DESC
+    LIMIT 1;
+        """,
+        (ticker,),
+    )
+    result = cursor.fetchone()
+    # Check if a result was found
+    if result is None:
+         # Check market price and date/time
+        market_price = round(getCurrentPrice(ticker), 2)
+        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Create transaction object
+        new_transaction = Transaction(
+            message.author, action, ticker, market_price, current_datetime
+        )
+
+        # Add market price and date/time to transaction object
+        new_transaction.price = market_price
+        new_transaction.date = current_datetime
+
+        # Store transaction object in database
+        cursor.execute(
+            """
+            INSERT INTO transactions (username, action, ticker, price, date, status) VALUES (?, ?, ?, ?, ?, ?)
+        """,
+            (message.author.name, action, ticker, market_price, current_datetime, "OPEN"),
+        )
+        conn.commit()
+        conn.close()
+        return new_transaction.to_embed()
+    else:
+        # Update open trade
+        curr_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        curr_price = round(getCurrentPrice(ticker), 2)
+        avg_price = round((curr_price + result[4]) / 2, 2)
+
+        # Update old transaction to status = 'UPDATED'
+        cursor.execute(
+            """
+            UPDATE transactions
+            SET status = 'UPDATED'
+            WHERE id = ?
+            """, (result[0],)
+        )
+
+        # Log new transaction of BUY/SHORT
+        cursor.execute(
+            """
+            INSERT INTO transactions (username, action, ticker, price, date, status) VALUES (?, ?, ?, ?, ?, ?)
+        """,
+            (message.author.name, action, ticker, avg_price, curr_date, "OPEN"),
+        )
+
+        conn.commit()
+        conn.close()
+        updated_transaction = Transaction(message.author, action, ticker, curr_price, curr_date)
+        return updated_transaction.updated_trade_embed(result[4], result[5], avg_price)
+        
+
 def close_trade(action, ticker, message):
     # SQL Query for all open transaction by same user and ticker
     conn = sqlite3.connect("stocks_transactions.db")
@@ -157,7 +250,7 @@ def close_trade(action, ticker, message):
         price = round(getCurrentPrice(ticker), 2)
         profit = round((price - result[4]) / result[4] * 100, 2)  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
         status = "CLOSED"
-        date = datetime.datetime.now(pytz.timezone("US/Eastern"))  # Current time as of EST
+        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Current time as of EST
 
         # Update the old transaction to be closed
         cursor.execute(
