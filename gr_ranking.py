@@ -31,7 +31,7 @@ async def get_ranking(ctx):
         for rank, (username, total_profit) in enumerate(profit_data[i * 10:i * 10 + 10], start=i * 10 + 1):
             embed.add_field(
                 name=f"#{rank} {username}",
-                value=f"Total Profit: {round(total_profit, 2)}",
+                value=f"Total Profit: {round(total_profit, 2)}%",
                 inline=False
             )
         pages.append(embed)
