@@ -51,13 +51,13 @@ class Transaction:
             color=embed_color,
         )
         embed.set_author(name=self.user.name, icon_url=self.user.avatar.url)
-        embed.add_field(name="User", value=self.user, inline=True)
-        embed.add_field(name="Ticker", value=self.ticker.upper(), inline=True)
-        embed.add_field(name="Price", value=self.price, inline=True)
-        embed.add_field(name="Status", value=self.status, inline=True)
+        # embed.add_field(name="User", value=self.user, inline=True)
+        # embed.add_field(name="Ticker", value=self.ticker.upper(), inline=True)
+        embed.add_field(name="Price 🏷️", value=self.price, inline=True)
+        embed.add_field(name="Status ⏳", value=self.status, inline=True)
         if self.action == "SELL" or self.action == "COVER":
-            embed.add_field(name="Profit", value=f'{str(self.profit)}%')
-        embed.add_field(name="Date", value=self.datetime)
+            embed.add_field(name="Profit 📈", value=f'{str(self.profit)}%')
+        embed.add_field(name="Date 📆", value=self.datetime)
         # embed.set_footer(text=f"{self.date} EST")
         return embed
     
@@ -70,19 +70,19 @@ class Transaction:
             embed_color = 0xFF0000
         embed = discord.Embed(
             title=f"Updated {self.action.capitalize()} {self.ticker.upper()}",
-            description=f"You have previously opened a trade for {self.ticker.upper()} at",
+            description=f"You have already opened a trade for {self.ticker.upper()}",
             color=embed_color,
         )
         embed.set_author(name=self.user.name, icon_url=self.user.avatar.url)
-        embed.add_field(name="Previous Price", value=prev_price, inline=True)
-        embed.add_field(name="Previous Date", value=prev_date, inline=True)
-        embed.add_field(name="\u200b", value="\u200b")
-        embed.add_field(name="Current Price", value=self.price, inline=True)
-        embed.add_field(name="Current Date", value=self.datetime, inline=True)
-        embed.add_field(name="Averaged Price", value=f"Thus your price is averaged to {avg_price}\n", inline=False)
-        embed.add_field(name="User", value=self.user, inline=True)
-        embed.add_field(name="Ticker", value=self.ticker.upper(), inline=True)
-        embed.add_field(name="Status", value=self.status, inline=True)
+        embed.add_field(name="Previous Price 📉", value=prev_price, inline=True)
+        # embed.add_field(name="Previous Date", value=prev_date, inline=True)
+        # embed.add_field(name="\u200b", value="\u200b")
+        embed.add_field(name="Current Price 📈", value=self.price, inline=True)
+        embed.add_field(name="Averaged Price 🏷️", value=f"{avg_price}", inline=False)
+        # embed.add_field(name="User", value=self.user, inline=True)
+        # embed.add_field(name="Ticker", value=self.ticker.upper(), inline=True)
+        embed.add_field(name="Status ⏳", value=self.status, inline=True)
+        embed.add_field(name="Date 📆", value=self.datetime, inline=True)
         return embed
 
 
@@ -101,7 +101,6 @@ def checkTickerExists(ticker):
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
-        print(stock.info)
 
         if info["exchange"] in [
             "NCM",
