@@ -236,11 +236,11 @@ def close_trade(action, ticker, message):
         """
     SELECT * 
     FROM transactions 
-    WHERE status = 'OPEN' AND ticker = ? AND action = ?
+    WHERE status = 'OPEN' AND ticker = ? AND action = ? AND username = ?
     ORDER BY date DESC
     LIMIT 1;
         """,
-        (ticker, oppo_action),
+        (ticker, oppo_action, message.author.name),
     )
 
     result = cursor.fetchone()
