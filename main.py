@@ -41,7 +41,6 @@ async def hello(ctx, arg=""):
 
 @bot.command()
 async def getrank(ctx):
-    print("hello world")
     await get_ranking(ctx)
 
 @bot.event
@@ -55,8 +54,6 @@ async def on_message(message):
 
     if len(string_content) == 2:
         ticker = string_content[1]
-
-        print(message.content)
 
         action = None
         if message.content.lower().startswith(bot_words):

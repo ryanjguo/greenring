@@ -101,8 +101,11 @@ def checkTickerExists(ticker):
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
+        print(stock.info)
 
         if info["exchange"] in [
+            "NCM",
+            "NGM",
             "NMS",
             "NYQ",
             "ASE",
@@ -112,6 +115,7 @@ def checkTickerExists(ticker):
             "VAN",
             "CNQ",
             "NEO",
+            "BTS",
         ]:
             return True
         else:
