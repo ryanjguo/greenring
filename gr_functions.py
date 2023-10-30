@@ -258,6 +258,8 @@ def close_trade(action, ticker, message):
         # New values
         price = round(getCurrentPrice(ticker), 2)
         profit = round((price - result[4]) / result[4] * 100, 2)  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
+        if action == "COVER":
+            profit = -profit
         status = "CLOSED"
         date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Current time as of EST
 
