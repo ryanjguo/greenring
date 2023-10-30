@@ -51,19 +51,21 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    string_content = message.content.upper().split()
+    string_content = message.content.lower().split()
 
     if len(string_content) == 2:
         ticker = string_content[1]
 
+        print(message.content)
+
         action = None
-        if message.content.startswith(bot_words):
+        if message.content.lower().startswith(bot_words):
             action = "BUY"
-        elif message.content.startswith(sell_words):
+        elif message.content.lower().startswith(sell_words):
             action = "SELL"
-        elif message.content.startswith(short_words):
+        elif message.content.lower().startswith(short_words):
             action = "SHORT"
-        elif message.content.startswith(cover_words):
+        elif message.content.lower().startswith(cover_words):
             action = "COVER"
         else:
             return
