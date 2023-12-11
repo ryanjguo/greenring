@@ -56,11 +56,11 @@ class Transaction:
         embed.add_field(name="Price 🏷️", value=self.price, inline=True)
         embed.add_field(name="Status ⏳", value=self.status, inline=True)
         if self.action == "SELL" or self.action == "COVER":
-            embed.add_field(name="Profit 📈", value=f'{str(self.profit)}%')
+            embed.add_field(name="Profit 📈", value="{str(self.profit)}")
         embed.add_field(name="Date 📆", value=self.datetime)
         # embed.set_footer(text=f"{self.date} EST")
         return embed
-    
+
     def updated_trade_embed(self, prev_price, avg_price):
         if self.profit == 0:
             embed_color = 0xFFFFFF
@@ -84,6 +84,28 @@ class Transaction:
         embed.add_field(name="Status ⏳", value=self.status, inline=True)
         embed.add_field(name="Date 📆", value=self.datetime, inline=True)
         return embed
+
+
+def unpack_message(message):
+    bot_words = ("bot ", "bought ", "buy ")
+    sell_words = ("sell ", "sold ", "sel ", "close ")
+    short_words = ("short ", "shorted ")
+    cover_words = ("cover ", "covered ")
+
+    ticker = message.content.lower().split()[1]
+    action = None
+    if message.content.lower().startswith(bot_words):
+        action = "BUY"
+    elif message.content.lower().startswith(sell_words):
+        action = "SELL"
+    elif message.content.lower().startswith(short_words):
+        action = "SHORT"
+    elif message.content.lower().startswith(cover_words):
+        action = "COVER"
+    else:
+        return
+
+    return action, ticker
 
 
 def embed_error(err_num):
@@ -174,8 +196,8 @@ def open_trade(action, ticker, message):
     result = cursor.fetchone()
 
     # Check if a result was found
-    if result is None: # No open trades
-         # Check market price and date/time
+    if result is None:  # No open trades
+        # Check market price and date/time
         market_price = round(getCurrentPrice(ticker), 2)
         current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -193,19 +215,27 @@ def open_trade(action, ticker, message):
             """
             INSERT INTO transactions (username, action, ticker, price, date, status) VALUES (?, ?, ?, ?, ?, ?)
         """,
-            (message.author.name, action, ticker, market_price, current_datetime, "OPEN"),
+            (
+                message.author.name,
+                action,
+                ticker,
+                market_price,
+                current_datetime,
+                "OPEN",
+            ),
         )
         conn.commit()
         conn.close()
         return new_transaction.to_embed()
-    else: # Open trades found
+    else:  # Open trades found
         # Update old transaction to status = 'UPDATED'
         cursor.execute(
             """
             UPDATE transactions
             SET status = 'UPDATED'
             WHERE id = ?
-            """, (result[0],)
+            """,
+            (result[0],),
         )
 
         # Find total price of all previously opened transactions on same ticker and action
@@ -213,24 +243,32 @@ def open_trade(action, ticker, message):
             """
             SELECT SUM(price) from transactions
             WHERE status = 'UPDATED' AND ticker = ? AND action = ?
-            """, (ticker, action)
+            """,
+            (ticker, action),
         )
         result = cursor.fetchone()
-        total_price = result[0] # Total price of all previously opened transactions
+        total_price = result[0]  # Total price of all previously opened transactions
 
         # Find number of open transactions on same ticker and action
         cursor.execute(
             """
             SELECT COUNT(*) from transactions
             WHERE status = 'UPDATED' AND ticker = ? AND action = ?
-            """, (ticker, action)
+            """,
+            (ticker, action),
         )
         result = cursor.fetchone()
-        count = result[0] + 1 # Count of all previously opened transactions + 1 (for current transaction)
+        count = (
+            result[0] + 1
+        )  # Count of all previously opened transactions + 1 (for current transaction)
 
-        prev_price = round(total_price / (count - 1), 2) # Average price of all previously opened transactions to use when returning embed
-        curr_price = round(getCurrentPrice(ticker), 2) # Current price of ticker
-        avg_price = round((total_price + curr_price )/ count, 2) # New average price (including current transaction)
+        prev_price = round(
+            total_price / (count - 1), 2
+        )  # Average price of all previously opened transactions to use when returning embed
+        curr_price = round(getCurrentPrice(ticker), 2)  # Current price of ticker
+        avg_price = round(
+            (total_price + curr_price) / count, 2
+        )  # New average price (including current transaction)
         curr_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Log new transaction of BUY/SHORT
@@ -246,9 +284,11 @@ def open_trade(action, ticker, message):
         conn.close()
 
         # Create new transaction object
-        updated_transaction = Transaction(message.author, action, ticker, curr_price, curr_date)
+        updated_transaction = Transaction(
+            message.author, action, ticker, curr_price, curr_date
+        )
         return updated_transaction.updated_trade_embed(prev_price, avg_price)
-        
+
 
 def close_trade(action, ticker, message):
     # SQL Query for all open transaction by same user and ticker
@@ -280,11 +320,15 @@ def close_trade(action, ticker, message):
 
         # New values
         price = round(getCurrentPrice(ticker), 2)
-        profit = round((price - result[4]) / result[4] * 100, 2)  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
+        profit = round(
+            (price - result[4]) / result[4] * 100, 2
+        )  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
         if action == "COVER":
             profit = -profit
         status = "CLOSED"
-        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Current time as of EST
+        date = datetime.datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )  # Current time as of EST
 
         # Update the old transaction to be closed
         cursor.execute(
@@ -302,7 +346,8 @@ def close_trade(action, ticker, message):
             UPDATE transactions
             SET status = 'CLOSED'
             WHERE status = 'UPDATED' AND ticker = ? AND action = ?
-            """, (ticker, oppo_action)
+            """,
+            (ticker, oppo_action),
         )
 
         # Log new transaction of SELL/COVER
@@ -319,7 +364,7 @@ def close_trade(action, ticker, message):
         sold_transaction = Transaction(message.author, action, ticker, price, date)
         sold_transaction.profit = profit
         sold_transaction.status = status
-        return sold_transaction.to_embed() # CREATE A NEW EMBED FOR SOLD TRANSACTIONS
+        return sold_transaction.to_embed()  # CREATE A NEW EMBED FOR SOLD TRANSACTIONS
     else:
         # ERROR: No open trades to sell
         return embed_error(0)

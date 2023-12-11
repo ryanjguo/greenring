@@ -4,7 +4,6 @@ from datetime import datetime
 from discord.ext import commands
 from gr_functions import *
 import yfinance as yf
-from gr_functions import Transaction
 import sqlite3
 from gr_ranking import *
 import json
@@ -20,10 +19,10 @@ intents.messages = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-bot_words = ("bot ", "bought ", "buy ")
-sell_words = ("sell ", "sold ", "sel ", "close ")
-short_words = ("short ", "shorted ")
-cover_words = ("cover ", "covered ")
+# bot_words = ("bot ", "bought ", "buy ")
+# sell_words = ("sell ", "sold ", "sel ", "close ")
+# short_words = ("short ", "shorted ")
+# cover_words = ("cover ", "covered ")
 
 init_db()
 
@@ -55,34 +54,20 @@ async def on_message(message):
     string_content = message.content.lower().split()
 
     if len(string_content) == 2:
-        ticker = string_content[1]
-
-        action = None
-        if message.content.lower().startswith(bot_words):
-            action = "BUY"
-        elif message.content.lower().startswith(sell_words):
-            action = "SELL"
-        elif message.content.lower().startswith(short_words):
-            action = "SHORT"
-        elif message.content.lower().startswith(cover_words):
-            action = "COVER"
-        else:
-            return
+        action, ticker = unpack_message(message)
 
         if checkTickerExists(ticker) == False:
             await message.channel.send("Invalid ticker. Please try again.")
             return
 
-        # For testing purposes
-        # if checkMarketOpen() == False:
-        #     await message.channel.send(
-        #         "Market is closed. Please try again at another time."
-        #     )
-        #     return
+        # User should specify price when market is closed, return error if not
+        if checkMarketOpen() == False:
+            await message.channel.send(
+                "Market is closed. Please specify a price for your trade.\nE.g. 'buy AAPL 100' or 'cover AMZN 250'"
+            )
+            return
 
-        if action == "BUY" or action == "SHORT":
-            ## CHECK IF ACTION IS A CLOSE TRADE (SELL OR COVER)
-
+        if action == "BUY" or action == "SHORT":  # action == 'BUY' or action == 'SHORT'
             # Display transaction object in chat
             await message.channel.send(embed=open_trade(action, ticker, message))
         else:  # action == 'SELL' or action == 'COVER'
