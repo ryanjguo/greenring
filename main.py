@@ -19,11 +19,6 @@ intents.messages = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# bot_words = ("bot ", "bought ", "buy ")
-# sell_words = ("sell ", "sold ", "sel ", "close ")
-# short_words = ("short ", "shorted ")
-# cover_words = ("cover ", "covered ")
-
 init_db()
 
 
@@ -53,6 +48,27 @@ async def on_message(message):
 
     string_content = message.content.lower().split()
 
+    if len(string_content) == 3:
+        action, ticker = unpack_message(message)
+        price = string_content[2]
+
+        if checkTickerExists(ticker) == False:
+            await message.channel.send("Invalid ticker. Please try again.")
+            return
+
+        if checkMarketOpen() == True:
+            await message.channel.send(
+                "Market is open. The bot will automatically retrieve the current market price.\nE.g. 'buy AAPL' or 'cover AMZN'"
+            )
+            return
+
+        if action == "BUY" or action == "SHORT":
+            await message.channel.send(embed=open_trade(action, ticker, message, price))
+        else:
+            await message.channel.send(
+                embed=close_trade(action, ticker, message, price)
+            )
+
     if len(string_content) == 2:
         action, ticker = unpack_message(message)
 
@@ -66,12 +82,17 @@ async def on_message(message):
                 "Market is closed. Please specify a price for your trade.\nE.g. 'buy AAPL 100' or 'cover AMZN 250'"
             )
             return
+        else:
+            # If market is open, retrieve current market price
+            price = getCurrentPrice(ticker)
 
         if action == "BUY" or action == "SHORT":  # action == 'BUY' or action == 'SHORT'
             # Display transaction object in chat
-            await message.channel.send(embed=open_trade(action, ticker, message))
+            await message.channel.send(embed=open_trade(action, ticker, message, price))
         else:  # action == 'SELL' or action == 'COVER'
-            await message.channel.send(embed=close_trade(action, ticker, message))
+            await message.channel.send(
+                embed=close_trade(action, ticker, message, price)
+            )
 
     await bot.process_commands(message)
 

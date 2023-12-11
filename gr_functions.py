@@ -56,7 +56,7 @@ class Transaction:
         embed.add_field(name="Price 🏷️", value=self.price, inline=True)
         embed.add_field(name="Status ⏳", value=self.status, inline=True)
         if self.action == "SELL" or self.action == "COVER":
-            embed.add_field(name="Profit 📈", value="{str(self.profit)}")
+            embed.add_field(name="Profit 📈", value=f'{str(self.profit)}')
         embed.add_field(name="Date 📆", value=self.datetime)
         # embed.set_footer(text=f"{self.date} EST")
         return embed
@@ -179,7 +179,7 @@ def getCurrentPrice(ticker):
     return todays_data["Close"][0]
 
 
-def open_trade(action, ticker, message):
+def open_trade(action, ticker, message, market_price):
     # SQL Query for all open transaction by same user and ticker'
     conn = sqlite3.connect("stocks_transactions.db")
     cursor = conn.cursor()
@@ -198,7 +198,8 @@ def open_trade(action, ticker, message):
     # Check if a result was found
     if result is None:  # No open trades
         # Check market price and date/time
-        market_price = round(getCurrentPrice(ticker), 2)
+        # market_price = round(getCurrentPrice(ticker), 2)
+        market_price = float(market_price)
         current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Create transaction object
@@ -290,7 +291,7 @@ def open_trade(action, ticker, message):
         return updated_transaction.updated_trade_embed(prev_price, avg_price)
 
 
-def close_trade(action, ticker, message):
+def close_trade(action, ticker, message, price):
     # SQL Query for all open transaction by same user and ticker
     if action == "SELL":
         oppo_action = "BUY"
@@ -319,7 +320,9 @@ def close_trade(action, ticker, message):
         ticker = result[3]
 
         # New values
-        price = round(getCurrentPrice(ticker), 2)
+        # if checkMarketOpen() == True:
+        #     price = round(getCurrentPrice(ticker), 2)
+        price = float(price)
         profit = round(
             (price - result[4]) / result[4] * 100, 2
         )  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
