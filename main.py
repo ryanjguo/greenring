@@ -9,10 +9,10 @@ import sqlite3
 from gr_ranking import *
 import json
 
-with open('config.json', 'r') as config_file:
+with open("config.json", "r") as config_file:
     config = json.load(config_file)
 
-TOKEN = config['token']
+TOKEN = config["token"]
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -39,9 +39,11 @@ async def hello(ctx, arg=""):
     """Simple command to respond with 'Hello!'."""
     await ctx.send(f"Hello {arg}!")
 
+
 @bot.command()
 async def getrank(ctx):
     await get_ranking(ctx)
+
 
 @bot.event
 async def on_message(message):
@@ -72,11 +74,11 @@ async def on_message(message):
             return
 
         # For testing purposes
-        if checkMarketOpen() == False:
-            await message.channel.send(
-                "Market is closed. Please try again at another time."
-            )
-            return
+        # if checkMarketOpen() == False:
+        #     await message.channel.send(
+        #         "Market is closed. Please try again at another time."
+        #     )
+        #     return
 
         if action == "BUY" or action == "SHORT":
             ## CHECK IF ACTION IS A CLOSE TRADE (SELL OR COVER)
