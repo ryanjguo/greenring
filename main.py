@@ -49,6 +49,12 @@ async def on_message(message):
     string_content = message.content.lower().split()
 
     if len(string_content) == 3:
+
+        result = unpack_message(message)
+
+        if result is None:
+            return
+        
         action, ticker = unpack_message(message)
         price = string_content[2]
 
@@ -70,6 +76,11 @@ async def on_message(message):
             )
 
     if len(string_content) == 2:
+        result = unpack_message(message)
+
+        if result is None:
+            return
+
         action, ticker = unpack_message(message)
 
         if checkTickerExists(ticker) == False:

@@ -56,7 +56,7 @@ class Transaction:
         embed.add_field(name="Price 🏷️", value=self.price, inline=True)
         embed.add_field(name="Status ⏳", value=self.status, inline=True)
         if self.action == "SELL" or self.action == "COVER":
-            embed.add_field(name="Profit 📈", value=f'{str(self.profit)}')
+            embed.add_field(name="Profit 📈", value=f'{str(self.profit)}%')
         embed.add_field(name="Date 📆", value=self.datetime)
         # embed.set_footer(text=f"{self.date} EST")
         return embed
@@ -187,11 +187,11 @@ def open_trade(action, ticker, message, market_price):
         """
     SELECT * 
     FROM transactions 
-    WHERE status = 'OPEN' AND ticker = ? AND action = ?
+    WHERE status = 'OPEN' AND ticker = ? AND action = ? AND username = ?
     ORDER BY date DESC
     LIMIT 1;
         """,
-        (ticker, action),
+        (ticker, action, message.author.name),
     )
     result = cursor.fetchone()
 
@@ -199,7 +199,7 @@ def open_trade(action, ticker, message, market_price):
     if result is None:  # No open trades
         # Check market price and date/time
         # market_price = round(getCurrentPrice(ticker), 2)
-        market_price = float(market_price)
+        market_price = round(float(market_price), 2)
         current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Create transaction object
@@ -234,18 +234,18 @@ def open_trade(action, ticker, message, market_price):
             """
             UPDATE transactions
             SET status = 'UPDATED'
-            WHERE id = ?
+            WHERE id = ? AND username = ?
             """,
-            (result[0],),
+            (result[0], message.author.name),
         )
 
         # Find total price of all previously opened transactions on same ticker and action
         cursor.execute(
             """
             SELECT SUM(price) from transactions
-            WHERE status = 'UPDATED' AND ticker = ? AND action = ?
+            WHERE status = 'UPDATED' AND ticker = ? AND action = ? AND username = ?
             """,
-            (ticker, action),
+            (ticker, action, message.author.name),
         )
         result = cursor.fetchone()
         total_price = result[0]  # Total price of all previously opened transactions
@@ -254,9 +254,9 @@ def open_trade(action, ticker, message, market_price):
         cursor.execute(
             """
             SELECT COUNT(*) from transactions
-            WHERE status = 'UPDATED' AND ticker = ? AND action = ?
+            WHERE status = 'UPDATED' AND ticker = ? AND action = ? AND username = ?
             """,
-            (ticker, action),
+            (ticker, action, message.author.name),
         )
         result = cursor.fetchone()
         count = (
@@ -322,12 +322,13 @@ def close_trade(action, ticker, message, price):
         # New values
         # if checkMarketOpen() == True:
         #     price = round(getCurrentPrice(ticker), 2)
-        price = float(price)
+        price = round(float(price), 2)
         profit = round(
             (price - result[4]) / result[4] * 100, 2
         )  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
         if action == "COVER":
-            profit = -profit
+            if profit != 0:
+                profit = -profit
         status = "CLOSED"
         date = datetime.datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
@@ -338,9 +339,9 @@ def close_trade(action, ticker, message, price):
             """
             UPDATE transactions
             SET status = 'CLOSED'
-            WHERE id = ?
+            WHERE id = ? AND username = ?
         """,
-            (id,),
+            (id, username),
         )
 
         # Update transactions with status = 'UPDATED' to be closed
@@ -348,9 +349,9 @@ def close_trade(action, ticker, message, price):
             """
             UPDATE transactions
             SET status = 'CLOSED'
-            WHERE status = 'UPDATED' AND ticker = ? AND action = ?
+            WHERE status = 'UPDATED' AND ticker = ? AND action = ? AND username = ?
             """,
-            (ticker, oppo_action),
+            (ticker, oppo_action, username),
         )
 
         # Log new transaction of SELL/COVER
