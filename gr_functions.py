@@ -123,6 +123,7 @@ def checkTickerExists(ticker):
     try:
         stock = yf.Ticker(ticker)
         info = stock.get_fast_info()
+        print(info)
 
         if info["exchange"] in [
             "NCM",
@@ -140,6 +141,7 @@ def checkTickerExists(ticker):
         ]:
             return True
         else:
+            print("hi")
             return False
 
     except Exception as e:
@@ -198,8 +200,9 @@ def open_trade(action, ticker, message, market_price):
     # Check if a result was found
     if result is None:  # No open trades
         # Check market price and date/time
-        # market_price = round(getCurrentPrice(ticker), 2)
-        market_price = round(float(market_price), 2)
+        print(market_price)
+        market_price = round(float(market_price), 4)
+        print(market_price)
         current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Create transaction object
@@ -263,13 +266,9 @@ def open_trade(action, ticker, message, market_price):
             result[0] + 1
         )  # Count of all previously opened transactions + 1 (for current transaction)
 
-        prev_price = round(
-            total_price / (count - 1), 2
-        )  # Average price of all previously opened transactions to use when returning embed
-        curr_price = round(getCurrentPrice(ticker), 2)  # Current price of ticker
-        avg_price = round(
-            (total_price + curr_price) / count, 2
-        )  # New average price (including current transaction)
+        prev_price = round(total_price / (count - 1), 4)  # Average price of all previously opened transactions to use when returning embed
+        curr_price = round(float(market_price), 4)  # Current price of ticker
+        avg_price = round((total_price + curr_price) / count, 4)  # New average price (including current transaction)
         curr_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Log new transaction of BUY/SHORT
@@ -321,11 +320,8 @@ def close_trade(action, ticker, message, price):
 
         # New values
         # if checkMarketOpen() == True:
-        #     price = round(getCurrentPrice(ticker), 2)
-        price = round(float(price), 2)
-        profit = round(
-            (price - result[4]) / result[4] * 100, 2
-        )  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
+        price = round(float(price), 4)
+        profit = round((price - result[4]) / result[4] * 100, 2)  # (Bought(shorted) price - Sold(covered) price) / bought(shorted) price * 100
         if action == "COVER":
             if profit != 0:
                 profit = -profit
