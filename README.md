@@ -10,22 +10,22 @@ Accepted formats of actions include:
 - short, shorted
 - cover, covered
 
-_During Market Hours:_
-All commands should follow the form _**[Action] [Symbol]**_
-For example: Buy AAPL, Sell AMZN
+_During Market Hours:_  
+All commands should follow the form _**[Action] [Symbol]**_  
+For example: Buy AAPL, Sell AMZN  
 The bot will automatically retrieve the live price of the stock, and return a Discord embed acknowledging your trade.
 
-<img width="355" alt="image" src="https://github.com/ryanjguo/greenring/assets/88060249/2c8c0b40-b1b7-412b-9795-3b113f983b5a">
+<img width="355" alt="image-during-market-hours" src="https://github.com/ryanjguo/greenring/assets/88060249/2c8c0b40-b1b7-412b-9795-3b113f983b5a">
 
-Before/After Market Hours:
-All commands should follow the form _**[Action] [Symbol] [Price]**_
-For example: Buy AAPL 123.45, Sell AMZN 159.12
+_Before/After Market Hours:_ 
+All commands should follow the form _**[Action] [Symbol] [Price]**_  
+For example: Buy AAPL 123.45, Sell AMZN 159.12  
 
-<img width="325" alt="image" src="https://github.com/ryanjguo/greenring/assets/88060249/d949326e-be6c-4faa-863f-73e75da09e6c">
+<img width="325" alt="image-after-market-hours" src="https://github.com/ryanjguo/greenring/assets/88060249/d949326e-be6c-4faa-863f-73e75da09e6c">
 
 Note: If you buy with a trade open already, it will update your trade by averaging the prices.
 
-<img width="357" alt="image" src="https://github.com/ryanjguo/greenring/assets/88060249/c141a7d2-657c-422c-a9db-44429a3983e7">
+<img width="357" alt="image-updated-trade" src="https://github.com/ryanjguo/greenring/assets/88060249/c141a7d2-657c-422c-a9db-44429a3983e7">
 
 ### !getrank 🥇
 
